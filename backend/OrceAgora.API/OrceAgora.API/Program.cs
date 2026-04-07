@@ -25,7 +25,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(o => o.AddPolicy("FrontendPolicy", p =>
-    p.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod()));
+    p.WithOrigins(
+        "http://localhost:5173",
+        "https://apporceagora-production.up.railway.app",  // atualiza depois com a URL real do Vercel
+        "https://orceagora.com.br"
+    )
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -40,6 +46,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-
 
 app.Run();
