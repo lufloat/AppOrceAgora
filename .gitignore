@@ -1,0 +1,20 @@
+# .NET
+backend/**/bin/
+backend/**/obj/
+backend/**/*.user
+backend/**/appsettings.Development.json
+
+# Visual Studio
+backend/**/.vs/
+backend/**/*.vsidx
+backend/**/*.suo
+backend/**/*.sln.docstates
+
+# Node
+frontend/**/node_modules/
+frontend/**/.env
+frontend/**/dist/
+
+# Geral
+.DS_Store
+*.log

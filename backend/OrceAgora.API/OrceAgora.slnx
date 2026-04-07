@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="OrceAgora.API/OrceAgora.API.csproj" />
+  <Project Path="OrceAgora.Application/OrceAgora.Application.csproj" Id="dcf2b236-4138-42d9-b9fa-e18eff1fc65e" />
+  <Project Path="OrceAgora.Domain/OrceAgora.Domain.csproj" Id="70a525ab-cf24-4b80-ad05-5ea2422863ef" />
+  <Project Path="OrceAgora.Infrastructure/OrceAgora.Infrastructure.csproj" Id="8625c781-cfde-45f4-9721-55eb98387b6f" />
+  <Project Path="OrceAgora.Tests/OrceAgora.Tests.csproj" Id="207bbb8d-ae6c-49f0-9d48-bc391a9565ce" />
+</Solution>
