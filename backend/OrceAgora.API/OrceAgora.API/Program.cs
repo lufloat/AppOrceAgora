@@ -27,8 +27,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(o => o.AddPolicy("FrontendPolicy", p =>
     p.WithOrigins(
         "http://localhost:5173",
-        "https://apporceagora-production.up.railway.app",  // atualiza depois com a URL real do Vercel
-        "https://front-end-orce-agora-s3bu.vercel.app"
+        "https://front-end-orce-agora-s3bu.vercel.app",
+        "https://front-end-orce-agora-s3bu-git-main-lufloats-projects.vercel.app",
+        "https://orceagora.com.br"
     )
     .AllowAnyHeader()
     .AllowAnyMethod()));
