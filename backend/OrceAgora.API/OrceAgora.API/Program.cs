@@ -27,8 +27,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(o => o.AddPolicy("FrontendPolicy", p =>
     p.WithOrigins(
         "http://localhost:5173",
-        "https://front-end-orce-agora-s3bu.vercel.app",
-        "https://front-end-orce-agora-s3bu-git-main-lufloats-projects.vercel.app",
+        "https://front-end-orce-agora-p21e.vercel.app",
+        "https://front-end-orce-agora-p21e-git-main-lufloats-projects.vercel.app",
         "https://orceagora.com.br"
     )
     .AllowAnyHeader()
