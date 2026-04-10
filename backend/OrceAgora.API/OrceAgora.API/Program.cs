@@ -36,7 +36,7 @@ builder.Services.AddCors(options =>
                 .WithOrigins(
                     "https://app-orce-agora.vercel.app",
                     "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
-                    "https://app-orce-agora-5dq6d0koq-lufloats-projects.vercel.app"
+                    "https://app-orce-agora-91mhq7ya2-lufloats-projects.vercel.app"
                 )
                 .AllowAnyHeader()
                 .AllowAnyMethod()
