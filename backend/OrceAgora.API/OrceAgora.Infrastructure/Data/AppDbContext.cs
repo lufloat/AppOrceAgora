@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Budget> Budgets => Set<Budget>();
 
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<BudgetItem> BudgetItems => Set<BudgetItem>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -58,6 +59,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(c => c.UserId).HasColumnName("user_id");
             e.Property(c => c.Name).HasColumnName("name");
             e.Property(c => c.CreatedAt).HasColumnName("created_at");
+        });
+
+        m.Entity<Subscription>(e => {
+            e.ToTable("subscriptions");
+            e.Property(s => s.Id).HasColumnName("id");
+            e.Property(s => s.UserId).HasColumnName("user_id");
+            e.Property(s => s.AsaasCustomerId).HasColumnName("asaas_customer_id");
+            e.Property(s => s.AsaasSubscriptionId).HasColumnName("asaas_subscription_id");
+            e.Property(s => s.Status).HasColumnName("status");
+            e.Property(s => s.Plan).HasColumnName("plan");
+            e.Property(s => s.CurrentPeriodStart).HasColumnName("current_period_start");
+            e.Property(s => s.CurrentPeriodEnd).HasColumnName("current_period_end");
+            e.Property(s => s.CreatedAt).HasColumnName("created_at");
+            e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
         });
 
         m.Entity<ServiceTemplate>(e => {

@@ -27,15 +27,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddCors(o => o.AddPolicy("FrontendPolicy", p =>
-    p.WithOrigins(
-        "http://localhost:5173",
-        "https://front-end-orce-agora-p21e.vercel.app",
-        "https://front-end-orce-agora-p21e-git-main-lufloats-projects.vercel.app",
-        "https://orceagora.com.br"
-    )
-    .AllowAnyHeader()
-    .AllowAnyMethod()));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy
+                .WithOrigins(
+                    "https://app-orce-agora.vercel.app",
+                    "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
+                    "https://app-orce-agora-5dq6d0koq-lufloats-projects.vercel.app"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

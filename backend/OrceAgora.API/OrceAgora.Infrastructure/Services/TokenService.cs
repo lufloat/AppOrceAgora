@@ -20,12 +20,7 @@ public class TokenService : ITokenService
     public string GenerateToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _config["Jwt:Key"] ?? _config["Jwt__Key"]!));
-
-        var issuer = _config["Jwt:Issuer"] ?? _config["Jwt__Issuer"] ?? "orceAgora";
-        var audience = _config["Jwt:Audience"] ?? _config["Jwt__Audience"] ?? "orceAgora";
-        var days = int.Parse(_config["Jwt:ExpiresInDays"]
-                       ?? _config["Jwt__ExpiresInDays"] ?? "30");
+            _config["Jwt__Key"] ?? _config["Jwt:Key"]!));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -38,10 +33,8 @@ public class TokenService : ITokenService
         };
 
         var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(days),
+            expires: DateTime.UtcNow.AddDays(30),
             signingCredentials: creds
         );
 

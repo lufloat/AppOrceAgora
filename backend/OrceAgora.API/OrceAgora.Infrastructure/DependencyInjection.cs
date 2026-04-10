@@ -28,7 +28,9 @@ public static class DependencyInjection
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
         services.AddScoped<IAgendaRepository, AgendaRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
  
+
 
         // Serviços de infraestrutura
         services.AddScoped<ITokenService, TokenService>();
@@ -42,6 +44,9 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAgendaService, AgendaService>();
+        services.AddScoped<IAsaasService, AsaasService>();
+        services.AddScoped<ISubscriptionService, SubscriptionService>();
+
 
         return services;
     }

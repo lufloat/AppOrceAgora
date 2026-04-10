@@ -11,7 +11,8 @@ public class BudgetService(
     IBudgetRepository budgetRepo,
     IClientRepository clientRepo,
     IUserRepository userRepo,
-    IPdfService pdfService) : IBudgetService
+    IPdfService pdfService,
+    ISubscriptionService subscriptionService) : IBudgetService
 {
     public async Task<PaginatedBudgetsDto> GetAllAsync(
         Guid userId, string? status, int page, int pageSize)
@@ -50,6 +51,13 @@ public class BudgetService(
 
     public async Task<BudgetDto> CreateAsync(Guid userId, CreateBudgetDto dto)
     {
+        // Verifica limite do plano básico
+        var status = await subscriptionService.GetStatusAsync(userId);
+        if (!status.CanCreateBudget)
+            throw new InvalidOperationException(
+                $"Limite de {status.BudgetLimit} orçamentos por mês atingido. " +
+                $"Faça upgrade para o plano Pro.");
+
         Guid? clientId = dto.ClientId;
         if (clientId is null && !string.IsNullOrWhiteSpace(dto.ClientName))
         {
