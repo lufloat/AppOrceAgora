@@ -27,21 +27,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy
-                .WithOrigins(
-                    "https://app-orce-agora.vercel.app",
-                    "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
-                    "https://app-orce-agora-91mhq7ya2-lufloats-projects.vercel.app"
-                )
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://app-orce-agora.vercel.app",
+                "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
+                "https://app-orce-agora-91mhq7ya2-lufloats-projects.vercel.app"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
 
 builder.Services.AddControllers();
@@ -52,7 +52,7 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors("FrontendPolicy");
+app.UseCors("AllowFrontend"); // ← estava "FrontendPolicy", nome errado!
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
