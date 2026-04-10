@@ -33,10 +33,15 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .SetIsOriginAllowed(origin =>
+            {
+                var uri = new Uri(origin);
+                return uri.Host == "app-orce-agora.vercel.app" ||
+                       uri.Host.EndsWith("-lufloats-projects.vercel.app");
+            })
             .AllowAnyHeader()
-            .AllowAnyMethod();
-        // Sem .AllowCredentials() — incompatível com AllowAnyOrigin
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
