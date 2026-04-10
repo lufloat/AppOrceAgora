@@ -33,11 +33,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "https://app-orce-agora.vercel.app",
-                "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
-                "https://app-orce-agora-91mhq7ya2-lufloats-projects.vercel.app"
-            )
+            .SetIsOriginAllowed(origin =>
+            {
+                var uri = new Uri(origin);
+                // Aceita qualquer subdomínio do seu projeto na Vercel
+                return uri.Host == "app-orce-agora.vercel.app" ||
+                       uri.Host.EndsWith("-lufloats-projects.vercel.app");
+            })
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
