@@ -39,13 +39,11 @@ public class SubscriptionsController(ISubscriptionService service) : ControllerB
         return Ok(new { message = "Assinatura cancelada." });
     }
 
-    // Webhook do Asaas — sem autenticação
     [HttpPost("webhook")]
     [AllowAnonymous]
     public async Task<IActionResult> Webhook()
     {
-        var payload = await new StreamReader(Request.Body)
-            .ReadToEndAsync();
+        var payload = await new StreamReader(Request.Body).ReadToEndAsync();
         await service.HandleWebhookAsync(payload);
         return Ok();
     }

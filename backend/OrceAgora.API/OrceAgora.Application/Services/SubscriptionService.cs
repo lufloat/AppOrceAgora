@@ -30,7 +30,6 @@ public class SubscriptionService(
         var isPro = subscription?.Plan == "pro" &&
                     subscription?.Status == "active";
 
-        var limit = isPro ? int.MaxValue : BasicMonthlyLimit;
         var canCreate = isPro || budgetsThisMonth < BasicMonthlyLimit;
 
         return new SubscriptionStatusDto
@@ -53,17 +52,30 @@ public class SubscriptionService(
 
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
 
-        // Cria cliente no Asaas se não existir
         var customerId = subscription?.AsaasCustomerId;
         if (customerId is null)
         {
-            customerId = await asaasService.CreateCustomerAsync(
-                user.Name, user.Email, dto.CpfCnpj);
+            try
+            {
+                customerId = await asaasService.CreateCustomerAsync(
+                    user.Name, user.Email, dto.CpfCnpj);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Erro ao criar cliente Asaas: {ex.Message}");
+            }
         }
 
-        // Cria assinatura
-        var subscriptionId = await asaasService
-            .CreateSubscriptionAsync(customerId, "Pro");
+        string subscriptionId;
+        try
+        {
+            subscriptionId = await asaasService
+                .CreateSubscriptionAsync(customerId, "Pro");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Erro ao criar assinatura Asaas: {ex.Message}");
+        }
 
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -93,7 +105,6 @@ public class SubscriptionService(
             await subscriptionRepo.UpdateAsync(subscription);
         }
 
-        // Atualiza o plano do usuário
         user.Plan = PlanType.Pro;
         await userRepo.UpdateAsync(user);
         await subscriptionRepo.SaveChangesAsync();
