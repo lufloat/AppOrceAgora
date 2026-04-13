@@ -52,15 +52,14 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseCors("AllowFrontend");      // ← primeiro
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors("AllowFrontend"); // ← estava "FrontendPolicy", nome errado!
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
-
 
 //////////testes
