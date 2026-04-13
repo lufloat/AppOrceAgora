@@ -18,14 +18,14 @@ public class AsaasService(IConfiguration config) : IAsaasService
         ?? "https://sandbox.asaas.com/api/v3";
 
     private HttpClient CreateClient()
-    {
-        var client = new HttpClient();
+{
+    var client = new HttpClient();
 
-        client.DefaultRequestHeaders.Add("access_token", _apiKey);
-        client.DefaultRequestHeaders.Add("User-Agent", "OrceAgoraApp/1.0");
+    client.DefaultRequestHeaders.Add("access_token", _apiKey);
+    client.DefaultRequestHeaders.Add("User-Agent", "OrceAgoraApp/1.0");
 
-        return client;
-    }
+    return client;
+}
     public async Task<string> CreateCustomerAsync(
         string name, string email, string? cpfCnpj)
     {

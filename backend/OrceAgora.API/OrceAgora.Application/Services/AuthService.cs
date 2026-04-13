@@ -1,4 +1,5 @@
-﻿using OrceAgora.Application.DTOs.Auth;
+﻿using Microsoft.Extensions.Configuration;
+using OrceAgora.Application.DTOs.Auth;
 using OrceAgora.Application.Interfaces;
 using OrceAgora.Domain.Entities;
 using OrceAgora.Domain.Interfaces;
@@ -8,7 +9,10 @@ namespace OrceAgora.Application.Services;
 public class AuthService(
     IUserRepository userRepo,
     ITokenService tokenService,
-    ILoginAttemptRepository attemptRepo) : IAuthService
+    ILoginAttemptRepository attemptRepo,
+    IEmailTokenRepository emailTokenRepo,
+    IEmailService emailService,
+    IConfiguration config) : IAuthService
 {
     private const int MaxAttempts = 5;
     private static readonly TimeSpan LockWindow = TimeSpan.FromMinutes(15);
@@ -24,12 +28,45 @@ public class AuthService(
             Email = dto.Email.ToLower(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
             CompanyName = dto.CompanyName,
-            Phone = dto.Phone
+            Phone = dto.Phone,
+            EmailConfirmed = false
         };
 
         await userRepo.AddAsync(user);
         await userRepo.SaveChangesAsync();
-        return BuildResponse(user);
+
+        var emailToken = new EmailToken
+        {
+            UserId = user.Id,
+            Type = "confirm_email",
+            ExpiresAt = DateTime.UtcNow.AddHours(24)
+        };
+        await emailTokenRepo.AddAsync(emailToken);
+        await emailTokenRepo.SaveChangesAsync();
+
+        var appUrl = Environment.GetEnvironmentVariable("Resend__AppUrl")
+            ?? config["Resend:AppUrl"]
+            ?? "http://localhost:5173";
+        var confirmUrl = $"{appUrl}/confirmar-email?token={emailToken.Token}";
+
+        await emailService.SendConfirmationEmailAsync(
+            user.Email, user.Name, confirmUrl);
+
+        return new AuthResponseDto
+        {
+            Token = tokenService.GenerateToken(user),
+            User = new UserDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Plan = user.Plan.ToString().ToLower(),
+                Phone = user.Phone,
+                CompanyName = user.CompanyName,
+                LogoUrl = user.LogoUrl,
+                EmailConfirmed = false
+            }
+        };
     }
 
     public async Task<(AuthResponseDto? Result, bool IsLocked, int RemainingAttempts)>
@@ -90,6 +127,62 @@ public class AuthService(
         return BuildResponse(user);
     }
 
+    public async Task<bool> ConfirmEmailAsync(Guid token)
+    {
+        var emailToken = await emailTokenRepo
+            .GetByTokenAsync(token, "confirm_email");
+
+        if (emailToken is null || !emailToken.IsValid) return false;
+
+        emailToken.User.EmailConfirmed = true;
+        emailToken.UsedAt = DateTime.UtcNow;
+
+        await userRepo.UpdateAsync(emailToken.User);
+        await emailTokenRepo.UpdateAsync(emailToken);
+        await emailTokenRepo.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task SendPasswordResetAsync(string email)
+    {
+        var user = await userRepo.GetByEmailAsync(email.ToLower());
+        if (user is null) return;
+
+        var emailToken = new EmailToken
+        {
+            UserId = user.Id,
+            Type = "reset_password",
+            ExpiresAt = DateTime.UtcNow.AddHours(1)
+        };
+        await emailTokenRepo.AddAsync(emailToken);
+        await emailTokenRepo.SaveChangesAsync();
+
+        var appUrl = Environment.GetEnvironmentVariable("Resend__AppUrl")
+            ?? config["Resend:AppUrl"]
+            ?? "http://localhost:5173";
+        var resetUrl = $"{appUrl}/redefinir-senha?token={emailToken.Token}";
+
+        await emailService.SendPasswordResetEmailAsync(
+            user.Email, user.Name, resetUrl);
+    }
+
+    public async Task<bool> ResetPasswordAsync(Guid token, string newPassword)
+    {
+        var emailToken = await emailTokenRepo
+            .GetByTokenAsync(token, "reset_password");
+
+        if (emailToken is null || !emailToken.IsValid) return false;
+
+        emailToken.User.PasswordHash =
+            BCrypt.Net.BCrypt.HashPassword(newPassword);
+        emailToken.UsedAt = DateTime.UtcNow;
+
+        await userRepo.UpdateAsync(emailToken.User);
+        await emailTokenRepo.UpdateAsync(emailToken);
+        await emailTokenRepo.SaveChangesAsync();
+        return true;
+    }
+
     private static async Task<(string Email, string Name, string Subject)?>
         ValidateGoogleTokenAsync(string accessToken)
     {
@@ -128,7 +221,8 @@ public class AuthService(
             Plan = user.Plan.ToString().ToLower(),
             Phone = user.Phone,
             CompanyName = user.CompanyName,
-            LogoUrl = user.LogoUrl
+            LogoUrl = user.LogoUrl,
+            EmailConfirmed = user.EmailConfirmed
         }
     };
 }

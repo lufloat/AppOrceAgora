@@ -17,17 +17,6 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(result);
     }
 
-
-    [HttpPost("google")]
-    public async Task<IActionResult> Google(GoogleLoginDto dto)
-    {
-        var result = await authService.GoogleLoginAsync(dto.IdToken);
-        if (result is null)
-            return Unauthorized(new { message = "Token Google inválido." });
-        return Ok(result);
-    }
-
-
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {
@@ -49,5 +38,50 @@ public class AuthController(IAuthService authService) : ControllerBase
             });
 
         return Ok(result);
+    }
+
+    [HttpPost("google")]
+    public async Task<IActionResult> Google(GoogleLoginDto dto)
+    {
+        var result = await authService.GoogleLoginAsync(dto.IdToken);
+        if (result is null)
+            return Unauthorized(new { message = "Token Google inválido." });
+        return Ok(result);
+    }
+
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] Guid token)
+    {
+        var success = await authService.ConfirmEmailAsync(token);
+        if (!success)
+            return BadRequest(new
+            {
+                message = "Link inválido ou expirado."
+            });
+        return Ok(new { message = "E-mail confirmado com sucesso!" });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+    {
+        await authService.SendPasswordResetAsync(dto.Email);
+        // Sempre retorna 200 — não revela se o e-mail existe
+        return Ok(new
+        {
+            message = "Se este e-mail existir, você receberá as instruções."
+        });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+    {
+        var success = await authService
+            .ResetPasswordAsync(dto.Token, dto.NewPassword);
+        if (!success)
+            return BadRequest(new
+            {
+                message = "Link inválido ou expirado."
+            });
+        return Ok(new { message = "Senha redefinida com sucesso!" });
     }
 }

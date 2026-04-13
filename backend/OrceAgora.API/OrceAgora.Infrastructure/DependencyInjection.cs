@@ -29,7 +29,8 @@ public static class DependencyInjection
         services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
         services.AddScoped<IAgendaRepository, AgendaRepository>();
         services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
- 
+        services.AddScoped<IEmailTokenRepository, EmailTokenRepository>();
+       
 
 
         // Serviços de infraestrutura
@@ -46,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IAgendaService, AgendaService>();
         services.AddScoped<IAsaasService, AsaasService>();
         services.AddScoped<ISubscriptionService, SubscriptionService>();
+        services.AddScoped<IEmailService, EmailService>();
 
 
         return services;

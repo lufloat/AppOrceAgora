@@ -12,6 +12,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<Budget> Budgets => Set<Budget>();
 
+    public DbSet<EmailToken> EmailTokens => Set<EmailToken>();
+
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<LoginAttempt> LoginAttempts => Set<LoginAttempt>();
     public DbSet<BudgetItem> BudgetItems => Set<BudgetItem>();
@@ -50,6 +52,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(l => l.Ip).HasColumnName("ip");
             e.Property(l => l.AttemptedAt).HasColumnName("attempted_at");
             e.Property(l => l.Success).HasColumnName("success");
+        });
+
+        m.Entity<EmailToken>(e => {
+            e.ToTable("email_tokens");
+            e.Property(t => t.Id).HasColumnName("id");
+            e.Property(t => t.UserId).HasColumnName("user_id");
+            e.Property(t => t.Token).HasColumnName("token");
+            e.Property(t => t.Type).HasColumnName("type");
+            e.Property(t => t.ExpiresAt).HasColumnName("expires_at");
+            e.Property(t => t.UsedAt).HasColumnName("used_at");
+            e.Property(t => t.CreatedAt).HasColumnName("created_at");
         });
 
 

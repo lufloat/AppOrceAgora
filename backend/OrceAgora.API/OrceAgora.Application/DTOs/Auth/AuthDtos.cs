@@ -12,6 +12,12 @@ public record UpdateProfileDto(
     string? BrandColor
 );
 
+public record ForgotPasswordDto([Required, EmailAddress] string Email);
+public record ResetPasswordDto(
+    [Required] Guid Token,
+    [Required, MinLength(8)] string NewPassword
+);
+
 public record UpdateLogoDto(string LogoBase64);
 
 public record RegisterDto(
@@ -43,4 +49,5 @@ public class UserDto
     public string? CompanyName { get; set; }
     public string? LogoUrl { get; set; }
     public string BrandColor { get; set; } = "#1A56DB";
+    public bool EmailConfirmed { get; set; }
 }

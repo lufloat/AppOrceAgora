@@ -14,3 +14,6 @@ public class AgendaEvent
     public User User { get; set; } = null!;
     public Budget? Budget { get; set; }
 }
+
+
+// verificar se essa agenda está de acordo com o que há na página.
