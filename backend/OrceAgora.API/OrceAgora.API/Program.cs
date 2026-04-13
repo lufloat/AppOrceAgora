@@ -33,23 +33,20 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "https://app-orce-agora.vercel.app",
-                "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
-                "https://app-orce-agora-o8mp0gzh4-lufloats-projects.vercel.app"
-            )
+            .SetIsOriginAllowed(origin =>
+            {
+                var uri = new Uri(origin);
+
+                return uri.Host == "app-orce-agora.vercel.app" ||
+                       uri.Host.EndsWith("-lufloats-projects.vercel.app");
+            })
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(opts =>
-    {
-        opts.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    });
-
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -57,10 +54,13 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors("AllowFrontend");
+app.UseCors("AllowFrontend"); // ← estava "FrontendPolicy", nome errado!
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
+
+
+//////////testes
