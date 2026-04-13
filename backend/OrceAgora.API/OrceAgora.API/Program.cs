@@ -28,17 +28,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL")
-    ?? "http://localhost:5173";
-
-builder.Services.AddCors(o => o.AddPolicy("FrontendPolicy", p =>
-    p.WithOrigins(
-        "http://localhost:5173",
-        "https://app-orce-agora.vercel.app",
-        frontendUrl
-    )
-    .AllowAnyHeader()
-    .AllowAnyMethod()));
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "https://app-orce-agora.vercel.app",
+                "https://app-orce-agora-git-main-lufloats-projects.vercel.app",
+                "https://app-orce-agora-o8mp0gzh4-lufloats-projects.vercel.app"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
