@@ -21,8 +21,15 @@ public class SubscriptionsController(ISubscriptionService service) : ControllerB
     [HttpPost("upgrade")]
     public async Task<IActionResult> Upgrade(UpgradeDto dto)
     {
-        var subscriptionId = await service.UpgradeToProAsync(UserId, dto);
-        return Ok(new { subscriptionId, message = "Assinatura Pro ativada!" });
+        try
+        {
+            var subscriptionId = await service.UpgradeToProAsync(UserId, dto);
+            return Ok(new { subscriptionId, message = "Assinatura Pro ativada!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 
     [HttpDelete("cancel")]

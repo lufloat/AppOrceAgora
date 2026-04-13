@@ -43,8 +43,16 @@ public class AsaasService(IConfiguration config) : IAsaasService
                 Encoding.UTF8, "application/json"));
 
         var json = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Asaas CreateCustomer error: {json}");
+
         var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("id").GetString()!;
+
+        if (!doc.RootElement.TryGetProperty("id", out var customerId))
+            throw new Exception($"Asaas CreateCustomer: id não encontrado. Resposta: {json}");
+
+        return customerId.GetString()!;
     }
 
     public async Task<string> CreateSubscriptionAsync(
@@ -55,7 +63,7 @@ public class AsaasService(IConfiguration config) : IAsaasService
         var body = new
         {
             customer = customerId,
-            billingType = "UNDEFINED", // Pix ou cartão
+            billingType = "UNDEFINED",
             value = 29.90,
             nextDueDate = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-dd"),
             cycle = "MONTHLY",
@@ -69,8 +77,16 @@ public class AsaasService(IConfiguration config) : IAsaasService
                 Encoding.UTF8, "application/json"));
 
         var json = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Asaas CreateSubscription error: {json}");
+
         var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("id").GetString()!;
+
+        if (!doc.RootElement.TryGetProperty("id", out var subscriptionId))
+            throw new Exception($"Asaas CreateSubscription: id não encontrado. Resposta: {json}");
+
+        return subscriptionId.GetString()!;
     }
 
     public async Task CancelSubscriptionAsync(string subscriptionId)
