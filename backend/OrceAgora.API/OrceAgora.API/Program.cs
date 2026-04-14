@@ -5,20 +5,22 @@ using OrceAgora.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddEnvironmentVariables();
+
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// JWT
+var jwtKey = builder.Configuration["Jwt__Key"]
+    ?? throw new Exception("JWT Key não configurada");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var key = builder.Configuration["Jwt__Key"]
-               ?? builder.Configuration["Jwt:Key"]
-               ?? throw new Exception("JWT Key não encontrada");
-
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(key)),
+                Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
@@ -28,21 +30,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// CORS — permite qualquer origem Vercel + localhost
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .SetIsOriginAllowed(origin =>
-            {
-                var uri = new Uri(origin);
-
-                return uri.Host == "app-orce-agora.vercel.app" ||
-                       uri.Host.EndsWith("-lufloats-projects.vercel.app");
-            })
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://app-orce-agora.vercel.app"
+            )
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
+        // Sem AllowCredentials — não é necessário com JWT
     });
 });
 
@@ -52,7 +53,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseCors("AllowFrontend");      // ← primeiro
+app.UseCors("AllowFrontend");
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
@@ -61,5 +62,3 @@ app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
-
-//////////testes
