@@ -9,21 +9,29 @@ namespace OrceAgora.Infrastructure.Services;
 public class EmailService(IConfiguration config) : IEmailService
 {
     private readonly string _apiKey =
-        Environment.GetEnvironmentVariable("Resend__ApiKey")
-        ?? config["Resend:ApiKey"]
-        ?? throw new Exception("Resend API Key não configurada");
+        (
+            Environment.GetEnvironmentVariable("Resend__ApiKey")
+            ?? config["Resend:ApiKey"]
+            ?? throw new Exception("Resend API Key não configurada")
+        ).Trim();
 
     private readonly string _fromEmail =
-        Environment.GetEnvironmentVariable("Resend__FromEmail")
-        ?? config["Resend:FromEmail"]
-        ?? "noreply@orceagora.com.br";
+        (
+            Environment.GetEnvironmentVariable("Resend__FromEmail")
+            ?? config["Resend:FromEmail"]
+            ?? "noreply@orceagora.com.br"
+        ).Trim();
 
     private async Task SendAsync(string to, string toName,
         string subject, string html)
     {
         using var client = new HttpClient();
+
+        // 🔥 LIMPA A API KEY (resolve seu erro)
+        var cleanApiKey = _apiKey.Trim();
+
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", _apiKey);
+            new AuthenticationHeaderValue("Bearer", cleanApiKey);
 
         var body = new
         {
