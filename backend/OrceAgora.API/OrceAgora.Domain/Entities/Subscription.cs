@@ -7,6 +7,8 @@ public class Subscription
     public string? AsaasCustomerId { get; set; }
     public string? AsaasSubscriptionId { get; set; }
     public string Status { get; set; } = "active";
+    public bool CancelAtPeriodEnd { get; set; } = false;
+
     public string Plan { get; set; } = "basic";
     public DateOnly? CurrentPeriodStart { get; set; }
     public DateOnly? CurrentPeriodEnd { get; set; }

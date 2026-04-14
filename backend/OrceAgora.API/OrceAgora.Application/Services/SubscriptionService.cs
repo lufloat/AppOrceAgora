@@ -20,17 +20,26 @@ public class SubscriptionService(
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-        var (budgets, _) = await budgetRepo.GetByUserAsync(
-            userId, null, 1, 1000);
-
-        var budgetsThisMonth = budgets
-            .Count(b => b.CreatedAt >= startOfMonth);
+        var (budgets, _) = await budgetRepo.GetByUserAsync(userId, null, 1, 1000);
+        var budgetsThisMonth = budgets.Count(b => b.CreatedAt >= startOfMonth);
 
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
+
+        // Ainda é Pro se: plano pro + ativo + período não expirou
         var isPro = subscription?.Plan == "pro" &&
-                    subscription?.Status == "active";
+                    subscription?.Status == "active" &&
+                    (subscription?.CurrentPeriodEnd == null ||
+                     subscription.CurrentPeriodEnd >= DateOnly.FromDateTime(now));
 
         var canCreate = isPro || budgetsThisMonth < BasicMonthlyLimit;
+
+        // Dias restantes se cancelamento agendado
+        int? daysRemaining = null;
+        if (subscription?.CancelAtPeriodEnd == true && subscription.CurrentPeriodEnd != null)
+        {
+            var end = subscription.CurrentPeriodEnd.Value.ToDateTime(TimeOnly.MinValue);
+            daysRemaining = Math.Max(0, (int)(end - now).TotalDays);
+        }
 
         return new SubscriptionStatusDto
         {
@@ -41,7 +50,9 @@ public class SubscriptionService(
             CanCreateBudget = canCreate,
             RemainingBudgets = isPro ? -1 :
                 Math.Max(0, BasicMonthlyLimit - budgetsThisMonth),
-            CurrentPeriodEnd = subscription?.CurrentPeriodEnd
+            CurrentPeriodEnd = subscription?.CurrentPeriodEnd,
+            CancelAtPeriodEnd = subscription?.CancelAtPeriodEnd ?? false,
+            DaysRemainingAfterCancel = daysRemaining
         };
     }
 
@@ -115,26 +126,19 @@ public class SubscriptionService(
     public async Task CancelProAsync(Guid userId)
     {
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
-        if (subscription?.AsaasSubscriptionId is null) return;
+        if (subscription is null) return;
 
-        await asaasService.CancelSubscriptionAsync(
-            subscription.AsaasSubscriptionId);
+        // Cancela no Asaas mas mantém acesso até o fim do período
+        if (subscription.AsaasSubscriptionId is not null)
+            await asaasService.CancelSubscriptionAsync(
+                subscription.AsaasSubscriptionId);
 
-        subscription.Status = "cancelled";
-        subscription.Plan = "basic";
+        subscription.CancelAtPeriodEnd = true;
         subscription.UpdatedAt = DateTime.UtcNow;
+        // NÃO muda o plano ainda — só agenda o cancelamento
         await subscriptionRepo.UpdateAsync(subscription);
-
-        var user = await userRepo.GetByIdAsync(userId);
-        if (user is not null)
-        {
-            user.Plan = PlanType.Basic;
-            await userRepo.UpdateAsync(user);
-        }
-
         await subscriptionRepo.SaveChangesAsync();
     }
-
     public async Task HandleWebhookAsync(string payload)
     {
         var doc = JsonDocument.Parse(payload);

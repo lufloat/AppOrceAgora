@@ -9,6 +9,8 @@ public class SubscriptionStatusDto
     public bool CanCreateBudget { get; set; }
     public int RemainingBudgets { get; set; }
     public DateOnly? CurrentPeriodEnd { get; set; }
+    public bool CancelAtPeriodEnd { get; set; }
+    public int? DaysRemainingAfterCancel { get; set; }
 }
 
 public record UpgradeDto(string? CpfCnpj);

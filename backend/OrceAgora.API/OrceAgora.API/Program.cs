@@ -45,6 +45,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+// Job que roda a cada hora para verificar assinaturas expiradas
+builder.Services.AddHostedService<SubscriptionExpirationJob>();
 
 var app = builder.Build();
 

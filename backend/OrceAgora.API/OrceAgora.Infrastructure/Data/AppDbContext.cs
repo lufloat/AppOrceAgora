@@ -86,6 +86,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(s => s.CurrentPeriodEnd).HasColumnName("current_period_end");
             e.Property(s => s.CreatedAt).HasColumnName("created_at");
             e.Property(s => s.UpdatedAt).HasColumnName("updated_at");
+            e.Property(s => s.CancelAtPeriodEnd).HasColumnName("cancel_at_period_end");
+
         });
 
         m.Entity<ServiceTemplate>(e => {
