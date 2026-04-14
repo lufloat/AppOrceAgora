@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using OrceAgora.Infrastructure;
+using OrceAgora.Infrastructure.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
