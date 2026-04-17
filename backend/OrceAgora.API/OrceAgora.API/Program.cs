@@ -38,7 +38,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",
                 "https://stimserv.com.br",
                 "https://www.stimserv.com.br",
-                "https://app-orce-agora.vercel.app" // mantém o antigo por segurança
+                "https://app-orce-agora.vercel.app",
+                "https://front-end-orce-agora-s3bu.vercel.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
