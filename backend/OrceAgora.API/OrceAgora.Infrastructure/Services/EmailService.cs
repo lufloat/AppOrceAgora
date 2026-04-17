@@ -15,7 +15,7 @@ public class EmailService(IConfiguration config) : IEmailService
             ?? throw new Exception("Resend API Key não configurada")
         ).Trim();
 
-    private readonly string _fromEmail = "onboarding@resend.dev";
+    private readonly string _fromEmail = "noreply@estimserv.com.br";
 
     private async Task SendAsync(string to, string toName,
         string subject, string html)
