@@ -180,7 +180,7 @@ public class BudgetService(
         Notes = b.Notes,
         PaymentMethods = b.PaymentMethods,
         ApprovalToken = b.ApprovalToken,
-        ApprovalLink = $"https://orceagora.com.br/aprovar/{b.ApprovalToken}",
+        ApprovalLink = $"https://stimserv.com.br/aprovar/{b.ApprovalToken}",
         ViewedAt = b.ViewedAt,
         CreatedAt = b.CreatedAt,
         ExpiresAt = b.CreatedAt.AddDays(b.ValidityDays)

@@ -261,7 +261,8 @@ public class PdfService : IPdfService
                     footer.Item().PaddingTop(6).Row(row =>
                     {
                         row.RelativeItem()
-                            .Text("Gerado por OrceAgora · orceagora.com.br")
+// Atualize a linha do footer:
+                        .Text("Gerado por StimServ · stimserv.com.br")          
                             .FontSize(8).FontColor("#94A3B8");
                         row.RelativeItem().AlignRight()
                             .Text($"Válido por {budget.ValidityDays} dias")

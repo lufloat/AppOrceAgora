@@ -35,11 +35,13 @@ builder.Services.AddCors(options =>
     {
         policy
             .WithOrigins(
-                "https://app-orce-agora.vercel.app"
+                "http://localhost:5173",
+                "https://stimserv.com.br",
+                "https://www.stimserv.com.br",
+                "https://app-orce-agora.vercel.app" // mantém o antigo por segurança
             )
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
     });
 });
 
