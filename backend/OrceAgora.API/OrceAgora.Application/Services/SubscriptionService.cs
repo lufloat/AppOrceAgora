@@ -5,7 +5,6 @@ using OrceAgora.Domain.Enums;
 using OrceAgora.Domain.Interfaces;
 using System.Text.Json;
 
-
 namespace OrceAgora.Application.Services;
 
 public class SubscriptionService(
@@ -26,7 +25,6 @@ public class SubscriptionService(
 
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
 
-        // Ainda é Pro se: plano pro + ativo + período não expirou
         var isPro = subscription?.Plan == "pro" &&
                     subscription?.Status == "active" &&
                     (subscription?.CurrentPeriodEnd == null ||
@@ -34,7 +32,6 @@ public class SubscriptionService(
 
         var canCreate = isPro || budgetsThisMonth < BasicMonthlyLimit;
 
-        // Dias restantes se cancelamento agendado
         int? daysRemaining = null;
         if (subscription?.CancelAtPeriodEnd == true && subscription.CurrentPeriodEnd != null)
         {
@@ -65,9 +62,11 @@ public class SubscriptionService(
         if (string.IsNullOrWhiteSpace(dto.CpfCnpj))
             throw new Exception("CPF/CNPJ é obrigatório para assinar o plano Pro.");
 
+        if (!IsValidCpfCnpj(dto.CpfCnpj))
+            throw new Exception("CPF/CNPJ inválido. Verifique e tente novamente.");
+
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
 
-        // Reutiliza customerId existente ou cria novo
         var customerId = subscription?.AsaasCustomerId
             ?? await asaasService.CreateCustomerAsync(user.Name, user.Email, dto.CpfCnpj);
 
@@ -83,7 +82,7 @@ public class SubscriptionService(
                 AsaasCustomerId = customerId,
                 AsaasSubscriptionId = result.SubscriptionId,
                 Plan = "pro",
-                Status = "active", // fica pending até webhook PAYMENT_RECEIVED
+                Status = "active",
                 CurrentPeriodStart = now,
                 CurrentPeriodEnd = now.AddMonths(1)
             };
@@ -94,7 +93,7 @@ public class SubscriptionService(
             subscription.AsaasCustomerId = customerId;
             subscription.AsaasSubscriptionId = result.SubscriptionId;
             subscription.Plan = "pro";
-            subscription.Status = "active"; // fica pending até webhook PAYMENT_RECEIVED
+            subscription.Status = "active";
             subscription.CancelAtPeriodEnd = false;
             subscription.CurrentPeriodStart = now;
             subscription.CurrentPeriodEnd = now.AddMonths(1);
@@ -121,17 +120,15 @@ public class SubscriptionService(
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
         if (subscription is null) return;
 
-        // Cancela no Asaas mas mantém acesso até o fim do período
         if (subscription.AsaasSubscriptionId is not null)
-            await asaasService.CancelSubscriptionAsync(
-                subscription.AsaasSubscriptionId);
+            await asaasService.CancelSubscriptionAsync(subscription.AsaasSubscriptionId);
 
         subscription.CancelAtPeriodEnd = true;
         subscription.UpdatedAt = DateTime.UtcNow;
-        // NÃO muda o plano ainda — só agenda o cancelamento
         await subscriptionRepo.UpdateAsync(subscription);
         await subscriptionRepo.SaveChangesAsync();
     }
+
     public async Task HandleWebhookAsync(string payload)
     {
         var doc = JsonDocument.Parse(payload);
@@ -171,5 +168,56 @@ public class SubscriptionService(
         subscription.UpdatedAt = DateTime.UtcNow;
         await subscriptionRepo.UpdateAsync(subscription);
         await subscriptionRepo.SaveChangesAsync();
+    }
+
+    // ── Validação CPF/CNPJ ──────────────────────────────────────────
+
+    private static bool IsValidCpfCnpj(string value)
+    {
+        var digits = new string(value.Where(char.IsDigit).ToArray());
+        return digits.Length == 11 ? IsValidCpf(digits)
+             : digits.Length == 14 ? IsValidCnpj(digits)
+             : false;
+    }
+
+    private static bool IsValidCpf(string cpf)
+    {
+        if (cpf.Distinct().Count() == 1) return false;
+
+        var sum = 0;
+        for (int i = 0; i < 9; i++)
+            sum += int.Parse(cpf[i].ToString()) * (10 - i);
+        var remainder = sum % 11;
+        var digit1 = remainder < 2 ? 0 : 11 - remainder;
+        if (digit1 != int.Parse(cpf[9].ToString())) return false;
+
+        sum = 0;
+        for (int i = 0; i < 10; i++)
+            sum += int.Parse(cpf[i].ToString()) * (11 - i);
+        remainder = sum % 11;
+        var digit2 = remainder < 2 ? 0 : 11 - remainder;
+        return digit2 == int.Parse(cpf[10].ToString());
+    }
+
+    private static bool IsValidCnpj(string cnpj)
+    {
+        if (cnpj.Distinct().Count() == 1) return false;
+
+        int[] weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        int[] weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+        var sum = 0;
+        for (int i = 0; i < 12; i++)
+            sum += int.Parse(cnpj[i].ToString()) * weights1[i];
+        var remainder = sum % 11;
+        var digit1 = remainder < 2 ? 0 : 11 - remainder;
+        if (digit1 != int.Parse(cnpj[12].ToString())) return false;
+
+        sum = 0;
+        for (int i = 0; i < 13; i++)
+            sum += int.Parse(cnpj[i].ToString()) * weights2[i];
+        remainder = sum % 11;
+        var digit2 = remainder < 2 ? 0 : 11 - remainder;
+        return digit2 == int.Parse(cnpj[13].ToString());
     }
 }
