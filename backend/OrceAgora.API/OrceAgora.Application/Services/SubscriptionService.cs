@@ -1,9 +1,10 @@
-﻿using System.Text.Json;
-using OrceAgora.Application.DTOs.Subscription;
+﻿using OrceAgora.Application.DTOs.Subscription;
 using OrceAgora.Application.Interfaces;
 using OrceAgora.Domain.Entities;
 using OrceAgora.Domain.Enums;
 using OrceAgora.Domain.Interfaces;
+using System.Text.Json;
+using static OrceAgora.Application.DTOs.Subscription.SubscriptionStatusDto;
 
 namespace OrceAgora.Application.Services;
 
@@ -56,7 +57,7 @@ public class SubscriptionService(
         };
     }
 
-    public async Task<string> UpgradeToProAsync(Guid userId, UpgradeDto dto)
+    public async Task<UpgradeResultDto> UpgradeToProAsync(Guid userId, UpgradeDto dto)
     {
         var user = await userRepo.GetByIdAsync(userId)
             ?? throw new Exception("Usuário não encontrado");
@@ -65,28 +66,10 @@ public class SubscriptionService(
 
         var customerId = subscription?.AsaasCustomerId;
         if (customerId is null)
-        {
-            try
-            {
-                customerId = await asaasService.CreateCustomerAsync(
-                    user.Name, user.Email, dto.CpfCnpj);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Erro ao criar cliente Asaas: {ex.Message}");
-            }
-        }
+            customerId = await asaasService.CreateCustomerAsync(
+                user.Name, user.Email, dto.CpfCnpj);
 
-        string subscriptionId;
-        try
-        {
-            subscriptionId = await asaasService
-                .CreateSubscriptionAsync(customerId, "Pro");
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Erro ao criar assinatura Asaas: {ex.Message}");
-        }
+        var result = await asaasService.CreateSubscriptionAsync(customerId, "Pro");
 
         var now = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -96,7 +79,7 @@ public class SubscriptionService(
             {
                 UserId = userId,
                 AsaasCustomerId = customerId,
-                AsaasSubscriptionId = subscriptionId,
+                AsaasSubscriptionId = result.SubscriptionId,
                 Plan = "pro",
                 Status = "active",
                 CurrentPeriodStart = now,
@@ -107,9 +90,10 @@ public class SubscriptionService(
         else
         {
             subscription.AsaasCustomerId = customerId;
-            subscription.AsaasSubscriptionId = subscriptionId;
+            subscription.AsaasSubscriptionId = result.SubscriptionId;
             subscription.Plan = "pro";
             subscription.Status = "active";
+            subscription.CancelAtPeriodEnd = false;
             subscription.CurrentPeriodStart = now;
             subscription.CurrentPeriodEnd = now.AddMonths(1);
             subscription.UpdatedAt = DateTime.UtcNow;
@@ -120,7 +104,14 @@ public class SubscriptionService(
         await userRepo.UpdateAsync(user);
         await subscriptionRepo.SaveChangesAsync();
 
-        return subscriptionId;
+        return new UpgradeResultDto
+        {
+            SubscriptionId = result.SubscriptionId,
+            PaymentUrl = result.PaymentUrl,
+            PixCode = result.PixCode,
+            PixQrCodeUrl = result.PixQrCodeUrl,
+            Message = "Assinatura criada! Realize o pagamento para ativar o plano Pro."
+        };
     }
 
     public async Task CancelProAsync(Guid userId)

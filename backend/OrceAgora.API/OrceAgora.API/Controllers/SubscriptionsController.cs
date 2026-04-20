@@ -23,8 +23,8 @@ public class SubscriptionsController(ISubscriptionService service) : ControllerB
     {
         try
         {
-            var subscriptionId = await service.UpgradeToProAsync(UserId, dto);
-            return Ok(new { subscriptionId, message = "Assinatura Pro ativada!" });
+            var result = await service.UpgradeToProAsync(UserId, dto);
+            return Ok(result);
         }
         catch (Exception ex)
         {
