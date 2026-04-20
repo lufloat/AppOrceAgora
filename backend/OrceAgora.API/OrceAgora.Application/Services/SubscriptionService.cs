@@ -83,7 +83,7 @@ public class SubscriptionService(
                 AsaasCustomerId = customerId,
                 AsaasSubscriptionId = result.SubscriptionId,
                 Plan = "pro",
-                Status = "pending", // fica pending até webhook PAYMENT_RECEIVED
+                Status = "active", // fica pending até webhook PAYMENT_RECEIVED
                 CurrentPeriodStart = now,
                 CurrentPeriodEnd = now.AddMonths(1)
             };
@@ -94,7 +94,7 @@ public class SubscriptionService(
             subscription.AsaasCustomerId = customerId;
             subscription.AsaasSubscriptionId = result.SubscriptionId;
             subscription.Plan = "pro";
-            subscription.Status = "pending"; // fica pending até webhook PAYMENT_RECEIVED
+            subscription.Status = "active"; // fica pending até webhook PAYMENT_RECEIVED
             subscription.CancelAtPeriodEnd = false;
             subscription.CurrentPeriodStart = now;
             subscription.CurrentPeriodEnd = now.AddMonths(1);
