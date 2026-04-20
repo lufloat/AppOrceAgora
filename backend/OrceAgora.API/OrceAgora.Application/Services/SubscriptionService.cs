@@ -42,7 +42,7 @@ public class SubscriptionService(
         return new SubscriptionStatusDto
         {
             Plan = isPro ? "pro" : "basic",
-            Status = subscription?.Status ?? "active",
+            Status = subscription?.Status ?? "inactive",
             BudgetsThisMonth = budgetsThisMonth,
             BudgetLimit = isPro ? 0 : BasicMonthlyLimit,
             CanCreateBudget = canCreate,
@@ -82,7 +82,7 @@ public class SubscriptionService(
                 AsaasCustomerId = customerId,
                 AsaasSubscriptionId = result.SubscriptionId,
                 Plan = "pro",
-                Status = "active",
+                Status = "inactive", // aguarda confirmação do pagamento via webhook
                 CurrentPeriodStart = now,
                 CurrentPeriodEnd = now.AddMonths(1)
             };
@@ -93,7 +93,7 @@ public class SubscriptionService(
             subscription.AsaasCustomerId = customerId;
             subscription.AsaasSubscriptionId = result.SubscriptionId;
             subscription.Plan = "pro";
-            subscription.Status = "active";
+            subscription.Status = "inactive"; // aguarda confirmação do pagamento via webhook
             subscription.CancelAtPeriodEnd = false;
             subscription.CurrentPeriodStart = now;
             subscription.CurrentPeriodEnd = now.AddMonths(1);
@@ -101,8 +101,7 @@ public class SubscriptionService(
             await subscriptionRepo.UpdateAsync(subscription);
         }
 
-        user.Plan = PlanType.Pro;
-        await userRepo.UpdateAsync(user);
+        // NÃO libera o Pro aqui — só via webhook PAYMENT_RECEIVED
         await subscriptionRepo.SaveChangesAsync();
 
         return new UpgradeResultDto
@@ -154,7 +153,20 @@ public class SubscriptionService(
             _ => subscription.Status
         };
 
-        if (subscription.Status == "cancelled")
+        // Pagamento confirmado — libera o Pro
+        if (eventType == "PAYMENT_RECEIVED")
+        {
+            subscription.Plan = "pro";
+            var user = await userRepo.GetByIdAsync(subscription.UserId);
+            if (user is not null)
+            {
+                user.Plan = PlanType.Pro;
+                await userRepo.UpdateAsync(user);
+            }
+        }
+
+        // Assinatura cancelada — rebaixa para Basic
+        if (eventType == "SUBSCRIPTION_DELETED")
         {
             subscription.Plan = "basic";
             var user = await userRepo.GetByIdAsync(subscription.UserId);
