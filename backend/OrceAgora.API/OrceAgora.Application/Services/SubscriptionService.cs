@@ -62,12 +62,14 @@ public class SubscriptionService(
         var user = await userRepo.GetByIdAsync(userId)
             ?? throw new Exception("Usuário não encontrado");
 
+        if (string.IsNullOrWhiteSpace(dto.CpfCnpj))
+            throw new Exception("CPF/CNPJ é obrigatório para assinar o plano Pro.");
+
         var subscription = await subscriptionRepo.GetByUserIdAsync(userId);
 
-        var customerId = subscription?.AsaasCustomerId;
-        if (customerId is null)
-            customerId = await asaasService.CreateCustomerAsync(
-                user.Name, user.Email, dto.CpfCnpj);
+        // Reutiliza customerId existente ou cria novo
+        var customerId = subscription?.AsaasCustomerId
+            ?? await asaasService.CreateCustomerAsync(user.Name, user.Email, dto.CpfCnpj);
 
         var result = await asaasService.CreateSubscriptionAsync(customerId, "Pro");
 
@@ -81,7 +83,7 @@ public class SubscriptionService(
                 AsaasCustomerId = customerId,
                 AsaasSubscriptionId = result.SubscriptionId,
                 Plan = "pro",
-                Status = "active",
+                Status = "pending", // fica pending até webhook PAYMENT_RECEIVED
                 CurrentPeriodStart = now,
                 CurrentPeriodEnd = now.AddMonths(1)
             };
@@ -92,7 +94,7 @@ public class SubscriptionService(
             subscription.AsaasCustomerId = customerId;
             subscription.AsaasSubscriptionId = result.SubscriptionId;
             subscription.Plan = "pro";
-            subscription.Status = "active";
+            subscription.Status = "pending"; // fica pending até webhook PAYMENT_RECEIVED
             subscription.CancelAtPeriodEnd = false;
             subscription.CurrentPeriodStart = now;
             subscription.CurrentPeriodEnd = now.AddMonths(1);
@@ -110,7 +112,7 @@ public class SubscriptionService(
             PaymentUrl = result.PaymentUrl,
             PixCode = result.PixCode,
             PixQrCodeUrl = result.PixQrCodeUrl,
-            Message = "Assinatura criada! Realize o pagamento para ativar o plano Pro."
+            Message = "Assinatura criada! Realize o pagamento via Pix para ativar o plano Pro."
         };
     }
 
